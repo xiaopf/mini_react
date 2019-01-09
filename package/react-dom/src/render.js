@@ -1,7 +1,48 @@
+import Component from "../../react/src/Component";
+
 export function render(vnode, container) {
+    return container.appendChild(_render(vnode));
+}
+
+export function renderComponent(component) {
+    let base;
+    const renderer = component.render();
+
+    if (component.base && component.componentWillUpdate) {
+        component.componentWillUpdate();
+    }
+
+    base = _render(renderer);
+    
+    if (component.base) {
+        if (component.componentDidUpdate) component.componentDidUpdate();
+    } else if (component.componentDidMount) {
+        component.componentDidMount();
+    }
+
+    if (component.base && component.base.parentNode) {
+        component.base.parentNode.replaceChild(base, component.base);
+    }
+
+    component.base = base;
+    base._component = component;
+}
+
+function _render(vnode){
+    if (vnode === undefined || vnode === null || typeof vnode === 'boolean') {
+        vnode = '';
+    }
+    if (typeof vnode === 'number') {
+        vnode = String(vnode);
+    }
     if (typeof vnode === 'string') {
         let textNode = document.createTextNode(vnode);
-        return container.appendChild(textNode);
+        return textNode;
+    }
+    if (typeof vnode.tag === 'function') {
+        const component = createComponent(vnode.tag, vnode.attrs);
+        setComponentProps(component, vnode.attrs);
+        return component.base;
     }
 
     let dom = document.createElement(vnode.tag);
@@ -12,12 +53,38 @@ export function render(vnode, container) {
             setAttribute(dom, key, value);
         })
     };
-    
+
     vnode.children.map(child => {
         render(child, dom)
     });
     
-    return container.appendChild(dom);
+    return dom;
+}
+
+function createComponent(component, props) {
+    let componentInstance;
+    if (component.prototype && component.prototype.render) {
+        componentInstance = new component(props);
+    } else {
+        componentInstance = new Component(props);
+        componentInstance.constructor = component;
+        componentInstance.render = function () {
+            return this.constructor(props);
+        }
+    }
+    return componentInstance;
+}
+
+function setComponentProps(component, props) {
+    if (!component.base) {
+        if (component.componentWillMount) {
+            component.componentWillMount();
+        }
+    } else if (component.componentWillReceiveProps) {
+        component.componentWillReceiveProps();
+    }
+    component.props = props;
+    renderComponent(component);
 }
 
 function setAttribute(dom, key, value){
@@ -25,7 +92,7 @@ function setAttribute(dom, key, value){
         key = 'class';
     };
     if (/on\w+/.test(key)) {
-        name = name.toLowerCase();
+        key = key.toLowerCase();
         dom[key] = value || '';
     } else if (key === 'style'){
         if (!value || typeof value === 'string') {

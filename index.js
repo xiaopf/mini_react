@@ -1,38 +1,29 @@
 import React from './package/react';
 import ReactDOM from './package/react-dom';
 
-class Counter extends React.Component {
-    constructor(props) {
-        super(props);
+class App extends React.Component {
+    constructor() {
+        super();
         this.state = {
             num: 0
         }
     }
-
-    componentWillUpdate() {
-        console.log('update');
+    componentDidMount() {
+        for (let i = 0; i < 10; i++) {
+            this.setState({ num: this.state.num + 1 });
+            console.log(this.state.num);
+        }
     }
-
-    componentWillMount() {
-        console.log('mount');
-    }
-
-    onClick() {
-        console.log('click')
-        this.setState({ num: this.state.num + 1 });
-    }
-
     render() {
         return (
-            <div onClick={() => this.onClick()}>
-                <h1>number: {this.state.num}</h1>
-                <button>add</button>
+            <div className="App">
+                <h1>{this.state.num}</h1>
             </div>
         );
     }
 }
 
 ReactDOM.render(
-    <Counter />,
+    <App />,
     document.getElementById('root')
 );

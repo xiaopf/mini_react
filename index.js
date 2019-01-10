@@ -9,7 +9,7 @@ class App extends React.Component {
         }
     }
     componentDidMount() {
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 100; i++) {
             this.setState({ num: this.state.num + 1 });
             console.log(this.state.num);
         }
